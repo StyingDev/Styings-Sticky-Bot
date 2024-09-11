@@ -1,6 +1,6 @@
-# Stying's Sticky Bot
+# Stying's Sticky Bot 📌📄
 
-A Discord bot that allows server administrators to set, manage, and display sticky messages in channels. This bot provides commands for setting sticky messages, disabling or enabling them, and removing them when no longer needed.
+A Discord bot that allows server administrators to set, manage, and display sticky messages in channels. This bot provides commands for setting sticky messages, disabling or enabling them, and removing them when no longer needed. [Invite the Bot!](https://discord.com/oauth2/authorize?client_id=1232239465502605352&permissions=277025515584&integration_type=0&scope=bot)
 
 ## Features
 
