@@ -9,7 +9,6 @@ A Discord bot that allows server administrators to set, manage, and display stic
 - Display all active or inactive sticky messages within a server.
 - Uses a JSON configuration file to save sticky messages persistently.
 - Supports both standard and embedded sticky messages.
-- Configurable via environment variables.
 
 ## Commands (Slash commands supported)
 
