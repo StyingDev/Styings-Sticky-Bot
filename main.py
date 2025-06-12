@@ -97,8 +97,14 @@ async def get_sticky(ctx):
     embed = discord.Embed(title="Sticky Messages", description="Here are the sticky messages for this server:", color=discord.Color.blue())
     for channel_id, sticky_info in sticky_messages.items():
         channel = client.get_channel(int(channel_id))
-        status = "Active" if sticky_info.get("active") else "inactive"
-        embed.add_field(name=f"Channel: {channel.name}", value=f"Status: {status}\nMessage: {sticky_info['message']}", inline=False)
+        if channel is None:
+            embed.add_field(name=f"Channel: [Deleted or Inaccessible: {channel_id}]", 
+                            value=f"Status: Unknown\nMessage: {sticky_info['message']}", inline=False)
+            continue
+        status = "Active" if sticky_info.get("active") else "Inactive"
+        embed.add_field(name=f"Channel: {channel.name}", 
+                        value=f"Status: {status}\nMessage: {sticky_info['message']}", inline=False)
+
     
     await ctx.send(embed=embed)
 
@@ -193,7 +199,7 @@ async def check_sticky_messages():
             logging.warning(f"Invalid structure for guild {guild_id}: expected dictionary, got {type(channels)}")
             continue
 
-        for channel_id, sticky_info in channels.items():
+        for channel_id, sticky_info in list(channels.items()):
             if not channel_id.isdigit():
                 logging.warning(f"Invalid channel ID in sticky config: {channel_id}")
                 continue
