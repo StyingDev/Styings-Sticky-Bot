@@ -11,7 +11,7 @@ load_dotenv()
 TOKEN = os.getenv("TOKEN")
 
 # Configure logging
-logging.basicConfig(level=logging.WARNING)  # Change to WARNING to reduce verbosity
+logging.basicConfig(level=logging.WARNING)
 
 # Set up intents and bot
 intents = discord.Intents.all()
@@ -35,7 +35,7 @@ def save_sticky_config(config):
     except Exception as e:
         logging.error(f"Error saving config: {e}")
 
-# Load the initial config without clearing
+# Load the initial config
 sticky_config = load_sticky_config()
 
 @client.event
@@ -77,7 +77,7 @@ async def set_sticky(ctx, *, message: str):
     sticky_config["sticky_messages"][guild_id][channel_id] = {
         "message": message,
         "message_id": None,
-        "active": True  # Set the sticky message to active by default
+        "active": True
     }
     save_sticky_config(sticky_config)
     await post_sticky_message(ctx.channel)
@@ -122,7 +122,7 @@ async def set_sticky_embed(ctx, *, message: str):
         "message": message,
         "message_id": None,
         "embed": True,
-        "active": True  # Set the sticky embed to active by default
+        "active": True
     }
     save_sticky_config(sticky_config)
     await post_sticky_message(ctx.channel)
@@ -171,7 +171,7 @@ async def post_sticky_message(channel):
     channel_id = str(channel.id)
     sticky_info = sticky_config["sticky_messages"].get(guild_id, {}).get(channel_id)
     
-    if sticky_info and sticky_info.get("active"):  # Check if sticky message is active
+    if sticky_info and sticky_info.get("active"):
         # Delete old sticky message if exists
         if sticky_info.get("message_id"):
             try:
@@ -182,7 +182,7 @@ async def post_sticky_message(channel):
         
         if sticky_info.get("embed"):
             embed = discord.Embed(description=sticky_info["message"], color=discord.Color(0x747c8b))
-            embed.title = "Sticky Message"  # Add title here
+            embed.title = "Sticky Message"
             msg = await channel.send(embed=embed)
         else:
             msg = await channel.send(sticky_info["message"])
@@ -220,23 +220,27 @@ async def check_sticky_messages():
 
 @client.hybrid_command(name='remove_sticky')
 @commands.has_permissions(manage_messages=True)
-async def remove_sticky(ctx):
-    """Remove the sticky message in the current channel."""
+async def remove_sticky(ctx, channel_id: str = None):
+    """Remove the sticky message in the current or specified channel."""
     guild_id = str(ctx.guild.id)
-    channel_id = str(ctx.channel.id)
+    target_channel_id = str(channel_id or ctx.channel.id)
 
-    if guild_id in sticky_config["sticky_messages"] and channel_id in sticky_config["sticky_messages"][guild_id]:
-        sticky_info = sticky_config["sticky_messages"][guild_id].pop(channel_id, None)
+    if guild_id in sticky_config["sticky_messages"] and target_channel_id in sticky_config["sticky_messages"][guild_id]:
+        sticky_info = sticky_config["sticky_messages"][guild_id].pop(target_channel_id, None)
         save_sticky_config(sticky_config)
+
         if sticky_info and sticky_info.get("message_id"):
-            try:
-                old_message = await ctx.channel.fetch_message(sticky_info["message_id"])
-                await old_message.delete()
-            except discord.NotFound:
-                pass
-        await ctx.send("Sticky message removed!")
+            target_channel = client.get_channel(int(target_channel_id))
+            if target_channel:
+                try:
+                    old_message = await target_channel.fetch_message(sticky_info["message_id"])
+                    await old_message.delete()
+                except discord.NotFound:
+                    pass
+
+        await ctx.send(f"✅ Sticky message removed for <#{target_channel_id}>.")
     else:
-        await ctx.send("No sticky message set in this channel.")
+        await ctx.send("❌ No sticky message found for the specified channel.")
 
 @client.event
 async def on_command_error(ctx, error):
@@ -247,7 +251,6 @@ async def on_command_error(ctx, error):
             ephemeral=True
         )
     else:
-        # Handle other exceptions as needed
         logging.error(f"Error occurred: {error}")
 
 client.run(TOKEN)
