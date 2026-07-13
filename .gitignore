@@ -1,0 +1,14 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# sqlite storage (contains live server data)
+sticky.db
+sticky.db-journal
+sticky.db-wal
+sticky.db-shm
+
+# legacy storage format, superseded by sticky.db
+sticky_config.json

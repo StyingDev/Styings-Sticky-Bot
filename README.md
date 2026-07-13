@@ -4,29 +4,40 @@ A Discord bot that allows server administrators to set, manage, and display stic
 
 ## Features
 
-- Set sticky messages (plain text or embedded) in any channel.
-- Manage sticky messages with commands to enable, disable, and remove them.
-- Display all active or inactive sticky messages within a server.
-- Uses a JSON configuration file to save sticky messages persistently.
-- Supports both standard and embedded sticky messages.
+- Set sticky messages (plain text or embedded, with custom color/title/image) in any channel.
+- Sticky reposts automatically based on chat activity: it tracks message length and line breaks
+  and reposts once roughly a "screen's worth" of chat has passed (configurable per channel), instead
+  of reposting instantly on every single message.
+- Edit an existing sticky's text in place without removing and recreating it.
+- Manage sticky messages with commands to enable, disable, and remove them (optionally targeting
+  another channel by mention).
+- Display all active or inactive sticky messages within a server, including who last updated them.
+- Persists sticky messages in a local SQLite database (`sticky.db`).
+- A background safety-net check reposts a sticky if its message was ever deleted or missed.
 
-## Commands (Slash commands supported)
+## Commands (slash commands only — no message-prefix commands)
 
-| Command                 | Description                                                         | Permissions Required       |
-|-------------------------|---------------------------------------------------------------------|-----------------------------|
-| `C!help`                | Shows the help message with a list of available commands.            | None                        |
-| `C!set_sticky`          | Sets a sticky message in the current channel.                        | Manage Messages             |
-| `C!set_sticky_embed`    | Sets a sticky message with an embedded format.                       | Manage Messages             |
-| `C!remove_sticky`       | Removes the sticky message in the current channel.                   | Manage Messages             |
-| `C!get_sticky`          | Displays all active and inactive sticky messages in the server.      | Manage Messages             |
-| `C!sticky_disable`      | Disables a sticky message without removing it.                       | Manage Messages             |
-| `C!sticky_enable`       | Re-enables a disabled sticky message.                                | Manage Messages             |
+| Command                                          | Description                                                                 | Permissions Required |
+|---------------------------------------------------|------------------------------------------------------------------------------|-----------------------|
+| `/help`                                          | Shows the help message with a list of available commands.                    | None                  |
+| `/setsticky <message>`                           | Sets a sticky message in the current channel.                                | Manage Messages       |
+| `/setstickyembed <message> [color] [title] [image]` | Sets a sticky message with an embedded format, optionally customized.     | Manage Messages       |
+| `/stickyedit <message>`                          | Edits the text of the existing sticky, keeping its other settings.           | Manage Messages       |
+| `/removesticky [channel]`                        | Removes the sticky message in the current or specified channel.              | Manage Messages       |
+| `/getsticky`                                     | Displays all active and inactive sticky messages in the server.              | Manage Messages       |
+| `/stickydisable [channel]`                       | Disables a sticky message without removing it.                               | Manage Messages       |
+| `/stickyenable [channel]`                        | Re-enables a disabled sticky message.                                        | Manage Messages       |
+| `/setstickythreshold <lines>`                    | Sets how many lines of chat activity occur before the sticky reposts.        | Manage Messages       |
+
+When inviting the bot, make sure to include the `applications.commands` OAuth2 scope (in addition to
+`bot`) so its slash commands can register in your server.
 
 ## Requirements
 
 - Python 3.8+
 - `discord.py` library (v2.4.0 or later)
 - `python-dotenv` for environment variable management
+- `aiosqlite` for persistent storage
 
 ## Setup
 
@@ -57,59 +68,82 @@ A Discord bot that allows server administrators to set, manage, and display stic
 
 ## Usage
 
-The bot provides several commands to manage sticky messages. Only users with the `Manage Messages` permission can use these commands.
+The bot is controlled entirely through Discord's slash commands (type `/` in a channel to see them).
+Only users with the `Manage Messages` permission can use the management commands.
 
 ### Setting a Sticky Message
 
 To set a sticky message in the current channel:
 
-```sh
-C!set_sticky Your message here
+```
+/setsticky message: Your message here
 ```
 
 ### Setting an Embedded Sticky Message
 
-To set a sticky message with an embed format:
+To set a sticky message with an embed format (color, title, and image are optional):
 
-```sh
-C!set_sticky_embed Your embedded message here
+```
+/setstickyembed message: Your embedded message here color: #5865F2 title: Read Me First
+```
+
+### Editing a Sticky Message
+
+To update the text of an existing sticky without recreating it (keeps its embed/color/threshold settings):
+
+```
+/stickyedit message: Your updated message here
 ```
 
 ### Disabling a Sticky Message
 
-To disable a sticky message in the current channel without removing it:
+To disable a sticky message in the current (or another) channel without removing it:
 
-```sh
-C!sticky_disable
+```
+/stickydisable
+/stickydisable channel: #announcements
 ```
 
 ### Enabling a Sticky Message
 
 To re-enable a disabled sticky message:
 
-```sh
-C!sticky_enable
+```
+/stickyenable
+/stickyenable channel: #announcements
 ```
 
 ### Removing a Sticky Message
 
-To remove the sticky message from the current channel:
+To remove the sticky message from the current (or another) channel:
 
-```sh
-C!remove_sticky
+```
+/removesticky
+/removesticky channel: #announcements
 ```
 
 ### Listing All Sticky Messages
 
 To show all active and inactive sticky messages in your server:
 
-```sh
-C!get_sticky
+```
+/getsticky
+```
+
+### Adjusting the Repost Threshold
+
+Stickies repost once roughly this many lines of chat activity have passed, instead of on every
+message:
+
+```
+/setstickythreshold lines: 20
 ```
 
 ## Configuration
 
-Sticky messages are saved in a JSON configuration file (`sticky_config.json`) located in the same directory as the bot script. This file stores the sticky messages for each channel and their statuses.
+Sticky messages are saved in a local SQLite database (`sticky.db`) located in the same directory as the
+bot script. If an older `sticky_config.json` is found on first run (and no `sticky.db` exists yet), it is
+automatically imported into the database.
 
 
 ## Contributing
